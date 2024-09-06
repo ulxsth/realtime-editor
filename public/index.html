@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>online editor</title>
+  <link rel="stylesheet" href="./styles/style.css">
+</head>
+
+<body>
+  <div id="editor"></div>
+
+  <!-- for ace editor -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/ace.js"
+    integrity="sha512-yjhIcftV1KZyd3rLPujicRV6NpFEuCqQaOBBdrey6vFdU1zVkJYgJf9a+15YrOuzzSXYNV2GU4xdQ8Xy9Zj/fA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/chrome");
+    editor.session.setMode("ace/mode/javascript");
+    
+    editor.session.on('change', () => {
+      const code = editor.getValue();
+      console.log(code);
+    });
+  </script>
+</body>
+</html>
