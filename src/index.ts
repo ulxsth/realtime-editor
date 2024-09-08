@@ -16,16 +16,16 @@ app.get("/", (req, res) => {
 
 io.on("connection", (socket) => {
   console.log("A user connected: ", socket.id)
+  socket.join("channel1")
 
   socket.on("disconnect", () => {
     console.log("A user disconnected")
   })
 
-  socket.on("change", (data) => {
-    text = data
-    socket.broadcast.emit("change", text)
+  socket.on("change", (msg) => {
+    text = msg.text
+    socket.to(msg.channelId).emit("change", text)
     console.log("Change: ", text);
-
   })
 })
 

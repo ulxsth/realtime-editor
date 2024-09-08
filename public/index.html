@@ -30,11 +30,14 @@
     editor.setTheme("ace/theme/chrome");
     editor.session.setMode("ace/mode/markdown");
 
-    editor.session.on('change', () => {
+    editor.session.on('change', (delta) => {
+      console.log(delta);
+
       if (!isSystemSettingValue) {
         const text = editor.getValue();
+        const channelId = 'channel1';
         console.log(text);
-        socket.emit('change', text);
+        socket.emit('change', { text, channelId });
       }
     });
   </script>
