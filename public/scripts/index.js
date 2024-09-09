@@ -9,7 +9,6 @@ let isSystemSettingValue = false;
 // イベントの受信
 socket.on("insert", (msg) => {
   isSystemSettingValue = true;
-  console.log(msg);
   msg.lines.reverse();
   for (let i = 0; i < msg.lines.length; i++) {
     const br = msg.lines.length - 1 === i ? "" : "\n";
@@ -20,21 +19,19 @@ socket.on("insert", (msg) => {
 
 socket.on("remove", (msg) => {
   isSystemSettingValue = true;
-  console.log(msg);
-  editor.session.remove({start: msg.start, end: msg.end});
+  editor.session.remove({ start: msg.start, end: msg.end });
   isSystemSettingValue = false;
 });
 
 // イベントの発信
 editor.session.on('change', (delta) => {
-  if (!isSystemSettingValue) {
-    const text = editor.getValue();
-    const channelId = 'channel1';
-    console.log(text);
-
-    socket.emit("change", {
-      delta: delta,
-      channelId: channelId,
-    });
+  if (isSystemSettingValue) {
+    return;
   }
+  const channelId = 'channel1';
+
+  socket.emit("change", {
+    delta: delta,
+    channelId: channelId,
+  });
 });
