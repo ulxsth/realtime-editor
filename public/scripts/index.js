@@ -10,6 +10,7 @@ let isSystemSettingValue = false;
 socket.on("insert", (msg) => {
   isSystemSettingValue = true;
   console.log(msg);
+  msg.lines.reverse();
   for (let i = 0; i < msg.lines.length; i++) {
     const br = msg.lines.length - 1 === i ? "" : "\n";
     editor.session.insert(msg.start, br + msg.lines[i]);
