@@ -23,9 +23,11 @@ io.on("connection", (socket) => {
   })
 
   socket.on("change", (msg) => {
-    text = msg.text
-    socket.to(msg.channelId).emit("change", text)
-    console.log("Change: ", text);
+    console.log(msg.delta);
+
+    socket.to(msg.channelId).emit(msg.delta.action, {
+      ...msg.delta,
+    });
   })
 })
 

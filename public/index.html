@@ -15,32 +15,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/ace.js"
     integrity="sha512-yjhIcftV1KZyd3rLPujicRV6NpFEuCqQaOBBdrey6vFdU1zVkJYgJf9a+15YrOuzzSXYNV2GU4xdQ8Xy9Zj/fA=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script>
-    const socket = io();
-    let isSystemSettingValue = false;
-
-    socket.on('change', (text) => {
-      const editor = ace.edit("editor");
-      isSystemSettingValue = true;
-      editor.setValue(text);
-      isSystemSettingValue = false;
-    });
-
-    const editor = ace.edit("editor");
-    editor.setTheme("ace/theme/chrome");
-    editor.session.setMode("ace/mode/markdown");
-
-    editor.session.on('change', (delta) => {
-      console.log(delta);
-
-      if (!isSystemSettingValue) {
-        const text = editor.getValue();
-        const channelId = 'channel1';
-        console.log(text);
-        socket.emit('change', { text, channelId });
-      }
-    });
-  </script>
+  <script src="scripts/index.js" type="module"></script>
 </body>
 
 </html>
