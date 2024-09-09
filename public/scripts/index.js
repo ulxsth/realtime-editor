@@ -7,19 +7,17 @@ const socket = io();
 let isSystemSettingValue = false;
 
 // イベントの受信
-socket.on("insert", (msg) => {
+socket.on("change", (delta) => {
   isSystemSettingValue = true;
-  msg.lines.reverse();
-  for (let i = 0; i < msg.lines.length; i++) {
-    const br = msg.lines.length - 1 === i ? "" : "\n";
-    editor.session.insert(msg.start, br + msg.lines[i]);
+  if (delta.action === "insert") {
+    delta.lines.reverse();
+    for (let i = 0; i < delta.lines.length; i++) {
+      const br = delta.lines.length - 1 === i ? "" : "\n";
+      editor.session.insert(delta.start, br + delta.lines[i]);
+    }
+  } else if(delta.action === "remove") {
+    editor.session.remove({ start: delta.start, end: delta.end });
   }
-  isSystemSettingValue = false;
-});
-
-socket.on("remove", (msg) => {
-  isSystemSettingValue = true;
-  editor.session.remove({ start: msg.start, end: msg.end });
   isSystemSettingValue = false;
 });
 
