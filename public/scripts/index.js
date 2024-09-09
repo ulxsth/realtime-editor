@@ -10,14 +10,17 @@ let isSystemSettingValue = false;
 socket.on("insert", (msg) => {
   isSystemSettingValue = true;
   console.log(msg);
-  editor.session.insert(msg.start, msg.lines[0]);
+  for (let i = 0; i < msg.lines.length; i++) {
+    const br = msg.lines.length - 1 === i ? "" : "\n";
+    editor.session.insert(msg.start, br + msg.lines[i]);
+  }
   isSystemSettingValue = false;
 });
 
 socket.on("remove", (msg) => {
   isSystemSettingValue = true;
   console.log(msg);
-  editor.session.remove(new Range(msg.start.row, msg.start.column, msg.end.row, msg.end.column));
+  editor.session.remove({start: msg.start, end: msg.end});
   isSystemSettingValue = false;
 });
 
