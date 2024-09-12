@@ -1,6 +1,7 @@
 import express from 'express'
 import { Server } from 'socket.io'
 import { createServer } from 'http'
+import { EditorSocketIOServer } from './EditorSocketIOServer'
 
 const app = express()
 app.use(express.static('public'))
@@ -8,7 +9,7 @@ app.use(express.static('public'))
 const server = createServer(app)
 const io = new Server(server)
 
-let text = ""
+const editorSocketIOServer = new EditorSocketIOServer("channel1", "", [])
 
 app.get("/", (req, res) => {
   return express.static('public/index.html')
@@ -16,15 +17,7 @@ app.get("/", (req, res) => {
 
 io.on("connection", (socket) => {
   console.log("A user connected: ", socket.id)
-  socket.join("channel1")
-
-  socket.on("disconnect", () => {
-    console.log("A user disconnected")
-  })
-
-  socket.on("change", (msg) => {
-    socket.to(msg.channelId).emit("change", msg.delta)
-  })
+  editorSocketIOServer.addClient(socket)
 })
 
 const port = 3000
