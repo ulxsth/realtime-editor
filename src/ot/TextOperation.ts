@@ -58,4 +58,24 @@ export class TextOperation {
 
     return this;
   }
+
+  /**
+   * TextOperation インスタンスに挿入操作を追加する。
+   * @param str 挿入する文字列
+   * @returns 操作を追加した後の TextOperation インスタンス
+   */
+  public insert = (str: string): TextOperation => {
+    if (str === "") return this;
+    this.targetLength += str.length;
+
+    // 直前の操作が insert であれば、それと結合する
+    const previouseOp = this.ops[this.ops.length - 1];
+    if (this.isInsert(previouseOp)) {
+      this.ops[this.ops.length - 1] = previouseOp + str;
+    } else {
+      this.ops.push(str);
+    }
+
+    return this;
+  }
 }
