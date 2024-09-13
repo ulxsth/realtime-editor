@@ -26,15 +26,19 @@ export class TextOperation {
     this.targetLength = 0;
   }
 
-  private isRetain = (op: Operation): op is number => {
+  public getOps = (): Operation[] => {
+    return this.ops;
+  }
+
+  public static isRetain = (op: Operation): op is number => {
     return typeof op === "number" && op > 0;
   }
 
-  private isInsert = (op: Operation): op is string => {
+  public static isInsert = (op: Operation): op is string => {
     return typeof op === "string";
   }
 
-  private isDelete = (op: Operation): op is number => {
+  public static isDelete = (op: Operation): op is number => {
     return typeof op === "number" && op < 0;
   }
 
@@ -50,7 +54,7 @@ export class TextOperation {
 
     // 直前の操作が retain であれば、それと結合する
     const previouseOp = this.ops[this.ops.length - 1];
-    if (this.isRetain(previouseOp)) {
+    if (TextOperation.isRetain(previouseOp)) {
       this.ops[this.ops.length - 1] = previouseOp + n;
     } else {
       this.ops.push(n);
@@ -70,7 +74,7 @@ export class TextOperation {
 
     // 直前の操作が insert であれば、それと結合する
     const previouseOp = this.ops[this.ops.length - 1];
-    if (this.isInsert(previouseOp)) {
+    if (TextOperation.isInsert(previouseOp)) {
       this.ops[this.ops.length - 1] = previouseOp + str;
     } else {
       this.ops.push(str);
@@ -90,7 +94,7 @@ export class TextOperation {
 
     // 直前の操作が delete であれば、それと結合する
     const previouseOp = this.ops[this.ops.length - 1];
-    if (this.isDelete(previouseOp)) {
+    if (TextOperation.isDelete(previouseOp)) {
       this.ops[this.ops.length - 1] = previouseOp + n;
     } else {
       this.ops.push(-n);
@@ -104,7 +108,7 @@ export class TextOperation {
    * @returns boolean
    */
   public isNoop = (): boolean => {
-    return this.ops.length === 0 || (this.ops.length === 1 && this.isRetain(this.ops[0]));
+    return this.ops.length === 0 || (this.ops.length === 1 && TextOperation.isRetain(this.ops[0]));
   }
 
   /**
@@ -121,13 +125,13 @@ export class TextOperation {
     const newStrArr: string[] = [];
     let strIndex = 0;
     for (const op of this.ops) {
-      if (this.isRetain(op)) {
+      if (TextOperation.isRetain(op)) {
         if (strIndex + op > str.length) {
           throw new Error("Operation can't be applied: string is too short.");
         }
         newStrArr.push(str.slice(strIndex, strIndex + op));
         strIndex += op;
-      } else if (this.isInsert(op)) {
+      } else if (TextOperation.isInsert(op)) {
         newStrArr.push(op);
       } else {
         strIndex -= op;
@@ -139,5 +143,120 @@ export class TextOperation {
     }
 
     return newStrArr.join('');
+  }
+
+  /**
+   * 同時に発生した2つの操作 A, B を受けとり、
+   * apply(apply(S, A), B') = apply(apply(S, B), A')
+   * となるような操作 A', B' を返す。
+   * @param operation1 操作 A
+   * @param operation2 操作 B
+   * @returns [A', B']
+   */
+  public static transform = (operation1: TextOperation, operation2: TextOperation): [TextOperation, TextOperation] => {
+    if(operation1.baseLength !== operation2.baseLength) {
+      throw new Error("Both operations have to have the same base length.");
+    }
+
+    const operation1prime = new TextOperation();
+    const operation2prime = new TextOperation();
+    let ops1 = operation1.getOps(), ops2 = operation2.getOps();
+    let i1 = 0, i2 = 0;
+    let op1 = ops1[i1++], op2 = ops2[i2++];
+
+    while (true) {
+      if(typeof op1 === "undefined" && typeof op2 === "undefined") {
+        break;
+      }
+
+      // 挿入を含む場合
+      if (this.isInsert(op1)) {
+        operation1prime.insert(op1);
+        operation2prime.retain(op1.length);
+        op1 = ops1[i1++];
+        continue;
+      }
+      if (this.isInsert(op2)) {
+        operation1prime.retain(op2.length);
+        operation2prime.insert(op2);
+        op2 = ops2[i2++];
+        continue;
+      }
+
+      if (typeof op1 === 'undefined') {
+        throw new Error("Cannot compose operations: first operation is too short.");
+      }
+      if (typeof op2 === 'undefined') {
+        throw new Error("Cannot compose operations: first operation is too long.");
+      }
+
+      var minl;
+      if (this.isRetain(op1) && this.isRetain(op2)) {
+        // 移動/移動
+        if (op1 > op2) {
+          minl = op2;
+          op1 = op1 - op2;
+          op2 = ops2[i2++];
+        } else if (op1 === op2) {
+          minl = op2;
+          op1 = ops1[i1++];
+          op2 = ops2[i2++];
+        } else {
+          minl = op1;
+          op2 = op2 - op1;
+          op1 = ops1[i1++];
+        }
+        operation1prime.retain(minl);
+        operation2prime.retain(minl);
+      } else if (this.isDelete(op1) && this.isDelete(op2)) {
+        // 削除/削除
+        if (-op1 > -op2) {
+          op1 = op1 - op2;
+          op2 = ops2[i2++];
+        } else if (op1 === op2) {
+          op1 = ops1[i1++];
+          op2 = ops2[i2++];
+        } else {
+          op2 = op2 - op1;
+          op1 = ops1[i1++];
+        }
+
+      // 削除/移動
+      } else if (this.isDelete(op1) && this.isRetain(op2)) {
+        if (-op1 > op2) {
+          minl = op2;
+          op1 = op1 + op2;
+          op2 = ops2[i2++];
+        } else if (-op1 === op2) {
+          minl = op2;
+          op1 = ops1[i1++];
+          op2 = ops2[i2++];
+        } else {
+          minl = -op1;
+          op2 = op2 + op1;
+          op1 = ops1[i1++];
+        }
+        operation1prime['delete'](minl);
+      } else if (this.isRetain(op1) && this.isDelete(op2)) {
+        if (op1 > -op2) {
+          minl = -op2;
+          op1 = op1 + op2;
+          op2 = ops2[i2++];
+        } else if (op1 === -op2) {
+          minl = op1;
+          op1 = ops1[i1++];
+          op2 = ops2[i2++];
+        } else {
+          minl = op1;
+          op2 = op2 + op1;
+          op1 = ops1[i1++];
+        }
+        operation2prime['delete'](minl);
+      } else {
+        throw new Error("The two operations aren't compatible");
+      }
+    }
+
+    return [operation1prime, operation2prime];
   }
 }
