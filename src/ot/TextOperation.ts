@@ -103,9 +103,41 @@ export class TextOperation {
    * 一連の操作を行った前後で、文字列にまったく変化がないかを判定する。
    * @returns boolean
    */
-  private isNoop = (): boolean => {
+  public isNoop = (): boolean => {
     return this.ops.length === 0 || (this.ops.length === 1 && this.isRetain(this.ops[0]));
   }
 
-  
+  /**
+   * 操作を適用する。
+   * @param str 操作を適用する文字列
+   * @returns 操作を適用した後の文字列
+   * @throws 与えられた文字列と、操作の基準となる文字列の長さが異なる場合
+   */
+  public apply = (str: string): string => {
+    if (this.baseLength !== str.length) {
+      throw new Error("The operation's base length must be equal to the string's length.");
+    }
+
+    const newStrArr: string[] = [];
+    let strIndex = 0;
+    for (const op of this.ops) {
+      if (this.isRetain(op)) {
+        if (strIndex + op > str.length) {
+          throw new Error("Operation can't be applied: string is too short.");
+        }
+        newStrArr.push(str.slice(strIndex, strIndex + op));
+        strIndex += op;
+      } else if (this.isInsert(op)) {
+        newStrArr.push(op);
+      } else {
+        strIndex -= op;
+      }
+    }
+
+    if (strIndex !== str.length) {
+      throw new Error("The operation didn't operate on the whole string.");
+    }
+
+    return newStrArr.join('');
+  }
 }
