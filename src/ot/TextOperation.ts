@@ -78,4 +78,24 @@ export class TextOperation {
 
     return this;
   }
+
+  /**
+   * TextOperation インスタンスに削除操作を追加する。
+   * @param n 削除する文字数
+   * @returns 操作を追加した後の TextOperation インスタンス
+   */
+  public delete = (n: number): TextOperation => {
+    if (n === 0) return this;
+    this.baseLength += n;
+
+    // 直前の操作が delete であれば、それと結合する
+    const previouseOp = this.ops[this.ops.length - 1];
+    if (this.isDelete(previouseOp)) {
+      this.ops[this.ops.length - 1] = previouseOp + n;
+    } else {
+      this.ops.push(-n);
+    }
+
+    return this;
+  }
 }
