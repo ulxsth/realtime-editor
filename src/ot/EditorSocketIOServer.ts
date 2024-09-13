@@ -1,10 +1,11 @@
 import { Socket } from "socket.io";
+import { TextOperation } from "./TextOperation";
 
 export class EditorSocketIOServer {
   constructor(
     public channelId: string,
     public document: string,
-    public operations: Operation[]
+    public operations: TextOperation[]
   ) {}
 
   public addClient(socket: Socket) {

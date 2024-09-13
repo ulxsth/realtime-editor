@@ -98,4 +98,14 @@ export class TextOperation {
 
     return this;
   }
+
+  /**
+   * 一連の操作を行った前後で、文字列にまったく変化がないかを判定する。
+   * @returns boolean
+   */
+  private isNoop = (): boolean => {
+    return this.ops.length === 0 || (this.ops.length === 1 && this.isRetain(this.ops[0]));
+  }
+
+  
 }
